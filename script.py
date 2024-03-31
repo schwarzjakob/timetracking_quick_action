@@ -11,11 +11,14 @@ csv_file = sys.argv[1]
 try:
     df = pd.read_csv(csv_file)
 
-    # Grouping by client and month
-    grouped = df.groupby(["client", pd.to_datetime(df["start"]).dt.strftime("%m.%Y")])
+    # Grouping by client and project
+    grouped = df.groupby(['client', 'project'])
+
+    # Extract the month and year from the first row of the CSV file
+    month_year = pd.to_datetime(df['start'].iloc[0]).strftime('%M %Y')
 
     for group, data in grouped:
-        client, month_year = group
+        client, project = group
 
         # Extract directory path from the CSV file path
         output_directory = os.path.dirname(csv_file)
