@@ -1,13 +1,54 @@
 import sys
 import pandas as pd
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
-from reportlab.platypus import SimpleDocTemplate, Spacer, Paragraph, Table, TableStyle
-from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.lib import colors
 from datetime import datetime
 import os
 import re
+
+# Import necessary modules from reportlab
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from reportlab.platypus import SimpleDocTemplate, Spacer, Paragraph, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib import colors
+from reportlab.lib.enums import TA_CENTER, TA_LEFT
+from reportlab.lib.colors import black
+
+
+# Define custom styles
+custom_styles = {
+    "title": ParagraphStyle(
+        name="Title",
+        fontSize=18,
+        leading=22,
+        alignment=TA_LEFT,
+        spaceAfter=20,
+        fontName="Helvetica-Bold",  # Ensure title is bold
+    ),
+    "body": ParagraphStyle(
+        name="Body",
+        fontSize=12,
+        leading=14,
+        spaceAfter=6,
+        fontName="Helvetica",  # Normal text, not bold
+    ),
+    "table_heading": ParagraphStyle(
+        name="TableHeading",
+        fontSize=10,
+        leading=12,
+        alignment=TA_LEFT,
+        textColor=black,
+        fontName="Helvetica-Bold",  # Ensure table headings are bold
+        spaceAfter=6,
+    ),
+    "table_body": ParagraphStyle(
+        name="TableBody",
+        fontSize=10,
+        leading=12,
+        alignment=TA_LEFT,
+        textColor=black,
+        fontName="Helvetica",  # Normal text, not bold for table body
+    ),
+}
 
 
 def prepare_project_data(timetracking_df):
@@ -72,13 +113,13 @@ def generate_project_invoice_as_pdf(
     styles = getSampleStyleSheet()
     
     # Add invoice title
-    story.append(Paragraph("Stundennachweis " + invoice_month_year, styles["Title"]))
+    story.append(Paragraph("Stundennachweis " + invoice_month_year, custom_styles["title"]))
     
     # Add client and project info
     story.append(Spacer(1, 12))  # Add some space
-    story.append(Paragraph("Auftraggeber: " + client_name, styles["Normal"]))
-    story.append(Paragraph("Projekt: " + project_name, styles["Normal"]))
-    story.append(Paragraph("Projektreferenz: " + project_reference, styles["Normal"]))
+    story.append(Paragraph("Auftraggeber: " + client_name, custom_styles["body"]))
+    story.append(Paragraph("Projekt: " + project_name, custom_styles["body"]))
+    story.append(Paragraph("Projektreferenz: " + project_reference, custom_styles["body"]))
     
     story.append(Spacer(1, 20))  # Space before the table
     
@@ -94,6 +135,11 @@ def generate_project_invoice_as_pdf(
         ("FONTNAME", (0,0), (-1,0), "Helvetica-Bold"),
         ("BOTTOMPADDING", (0,0), (-1,0), 12),
         ("GRID", (0,0), (-1,-1), 1, colors.black),
+        # Apply custom styles to table headings and body
+        ("TEXTCOLOR", (0, 0), (-1, 0), custom_styles["table_heading"].textColor),
+        ("FONTNAME", (0, 0), (-1, 0), custom_styles["table_heading"].fontName),
+        ("TEXTCOLOR", (0, 1), (-1, -1), custom_styles["table_body"].textColor),
+        ("FONTNAME", (0, 1), (-1, -1), custom_styles["table_body"].fontName),
     ]))
     
     story.append(table)
