@@ -2,6 +2,9 @@ import sys
 import pandas as pd
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
+from reportlab.platypus import SimpleDocTemplate, Spacer, Paragraph, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib import colors
 from datetime import datetime
 import os
 import re
@@ -64,39 +67,39 @@ def generate_project_invoice_as_pdf(
     project_reference,
 ):
     """" Generates a PDF invoice for a project based on the provided DataFrame."""
-    pdf_canvas = canvas.Canvas(output_directory_and_filename, pagesize=letter)
+    doc = SimpleDocTemplate(output_directory_and_filename, pagesize=letter)
+    story = []
+    styles = getSampleStyleSheet()
+    
+    # Add invoice title
+    story.append(Paragraph("Stundennachweis " + invoice_month_year, styles["Title"]))
+    
+    # Add client and project info
+    story.append(Spacer(1, 12))  # Add some space
+    story.append(Paragraph("Auftraggeber: " + client_name, styles["Normal"]))
+    story.append(Paragraph("Projekt: " + project_name, styles["Normal"]))
+    story.append(Paragraph("Projektreferenz: " + project_reference, styles["Normal"]))
+    
+    story.append(Spacer(1, 20))  # Space before the table
+    
+    # Prepare data for the table including header
+    data = [["Datum", "Anzahl Stunden", "Aufgabe"]] + [
+        [format_date(row["start"]), row["duration"], row["task"]] for _, row in dataframe.iterrows()
+    ]
+    
+    # Create table
+    table = Table(data)
+    table.setStyle(TableStyle([
+        ("ALIGN", (0,0), (-1,-1), "CENTER"),
+        ("FONTNAME", (0,0), (-1,0), "Helvetica-Bold"),
+        ("BOTTOMPADDING", (0,0), (-1,0), 12),
+        ("GRID", (0,0), (-1,-1), 1, colors.black),
+    ]))
+    
+    story.append(table)
+    
+    doc.build(story)
 
-    # Title with current month and year
-    title = "Stundennachweis " + invoice_month_year
-    pdf_canvas.setFont("Helvetica-Bold", 12)
-    pdf_canvas.drawString(30, letter[1] - 30, title)
-
-    pdf_canvas.setFont("Helvetica", 10)
-    pdf_canvas.drawString(30, letter[1] - 50, "Auftraggeber: ")
-    pdf_canvas.drawString(150, letter[1] - 50, client_name)
-    pdf_canvas.drawString(30, letter[1] - 70, "Projekt:")
-    pdf_canvas.drawString(150, letter[1] - 70, project_name)
-    pdf_canvas.drawString(30, letter[1] - 90, "Projektreferenz:")
-    pdf_canvas.drawString(150, letter[1] - 90, project_reference)
-
-    # Table headers
-    headers = ["Datum", "Anzahl Stunden", "Aufgabe"]
-    y_position = (
-        letter[1] - 130
-    )  # Start position for printing rows after additional information
-    for header in headers:
-        pdf_canvas.drawString(30 + headers.index(header) * 150, y_position, header)
-
-    # Table rows
-    y_position -= 20
-    for index, row in dataframe.iterrows():
-        y_position -= 20
-        date = format_date(row["start"])  # Format Datum
-        pdf_canvas.drawString(30, y_position, date)  # Datum
-        pdf_canvas.drawString(180, y_position, str(row["duration"]))  # Anzahl Stunden
-        pdf_canvas.drawString(330, y_position, row["task"])  # Aufgabe
-
-    pdf_canvas.save()
 
 
 if __name__ == "__main__":
