@@ -11,7 +11,14 @@ def format_date(date_string):
     return date_obj.strftime("%d.%m.%Y")
 
 
-def generate_pdf(dataframe, output_filename, invoice_month_year, client_name, project, project_name, project_reference):
+def generate_pdf(
+    dataframe,
+    output_filename,
+    invoice_month_year,
+    client_name,
+    project_name,
+    project_reference,
+):
     c = canvas.Canvas(output_filename, pagesize=letter)
 
     # Title with current month and year
@@ -84,9 +91,8 @@ try:
             client_project_pdf_filename,
             invoice_month_year,
             client_name,
-            project,
             project_name,
-            project_reference
+            project_reference,
         )
 
 except Exception as e:
