@@ -23,7 +23,7 @@ def process_timetracking_data(timetracking_df, output_directory):
             # Generate the PDF filename based on the client and current date
             client_project_pdf_filename = construct_pdf_filename(output_directory, project_name)
 
-            generate_pdf(
+            generate_project_invoice_as_pdf(
                 client_project_df,
                 client_project_pdf_filename,
                 invoice_month_year,
@@ -55,7 +55,7 @@ def format_date(date_string):
     return date_obj.strftime("%d.%m.%Y")
 
 
-def generate_pdf(
+def generate_project_invoice_as_pdf(
     dataframe,
     output_filename,
     invoice_month_year,
