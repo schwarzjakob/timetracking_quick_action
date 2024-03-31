@@ -6,6 +6,45 @@ from datetime import datetime
 import os
 
 
+def process_timetracking_data(timetracking_df, output_directory):
+    try:
+        # Grouping by client and project
+        grouped_timetracking_df = timetracking_df.groupby(["client", "project"])
+
+        # Extract the month and year from the first row of the CSV file
+        invoice_month_year = pd.to_datetime(timetracking_df["start"].iloc[0]).strftime(
+            "%m.%Y"
+        )
+
+        for (client_name, project), client_project_df in grouped_timetracking_df:
+            # Additional project information
+            project_name = project.split("_", 1)[1].replace("_", " ")
+            project_reference = project.split("_")[0]
+
+            # Create the output directory if it does not exist
+            os.makedirs(output_directory, exist_ok=True)
+
+            # Generate the PDF filename based on the client and current date
+            current_date = datetime.now().strftime("%Y-%m-%d")
+            client_project_pdf_filename = os.path.join(
+                output_directory,
+                f"{current_date}_Stundennachweis_{project_name}_RNR.pdf",
+            )
+
+            generate_pdf(
+                client_project_df,
+                client_project_pdf_filename,
+                invoice_month_year,
+                client_name,
+                project_name,
+                project_reference,
+            )
+
+    except Exception as e:
+        print("Error:", e)
+        sys.exit(1)
+
+
 def format_date(date_string):
     date_obj = datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
     return date_obj.strftime("%d.%m.%Y")
@@ -54,47 +93,15 @@ def generate_pdf(
     pdf_canvas.save()
 
 
-# Assuming the first argument is the CSV file path
-csv_file = sys.argv[1]
 
-try:
+if __name__ == "__main__":
+    # Assuming the first argument is the CSV file path
+    csv_file = sys.argv[1]
+
+    # Extract directory path from the CSV file path and define output directory
+    current_directory = os.path.dirname(csv_file)
+    output_directory = os.path.join(current_directory, "invoices")
+
     timetracking_df = pd.read_csv(csv_file)
-
-    # Grouping by client and project
-    grouped_timetracking_df = timetracking_df.groupby(["client", "project"])
-
-    # Extract the month and year from the first row of the CSV file
-    invoice_month_year = pd.to_datetime(timetracking_df["start"].iloc[0]).strftime(
-        "%m.%Y"
-    )
-
-    for (client_name, project), client_project_df in grouped_timetracking_df:
-        # Additional project information
-        project_name = project.split("_", 1)[1].replace("_", " ")
-        project_reference = project.split("_")[0]
-
-        # Extract directory path from the CSV file path and define output directory
-        current_directory = os.path.dirname(csv_file)
-        output_directory = os.path.join(current_directory, "invoices")
-
-        # Create the output directory if it does not exist
-        os.makedirs(output_directory, exist_ok=True)
-
-        # Generate the PDF filename based on the client and current date
-        current_date = datetime.now().strftime("%Y-%m-%d")
-        client_project_pdf_filename = os.path.join(
-            output_directory, f"{current_date}_Stundennachweis_{project_name}_RNR.pdf"
-        )
-
-        generate_pdf(
-            client_project_df,
-            client_project_pdf_filename,
-            invoice_month_year,
-            client_name,
-            project_name,
-            project_reference,
-        )
-
-except Exception as e:
-    print("Error:", e)
-    sys.exit(1)
+    process_timetracking_data(timetracking_df, output_directory)
+    print("PDF invoices successfully generated.")
