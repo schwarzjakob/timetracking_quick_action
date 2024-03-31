@@ -4,6 +4,7 @@ from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from datetime import datetime
 import os
+import re
 
 
 def prepare_project_data(timetracking_df):
@@ -11,15 +12,19 @@ def prepare_project_data(timetracking_df):
     Prepares data by grouping the DataFrame by client and project,
     and extracts necessary details for invoice generation.
     """
-    invoice_month_year = pd.to_datetime(timetracking_df["start"].iloc[0]).strftime("%m.%Y")
+    invoice_month_year = pd.to_datetime(timetracking_df["start"].iloc[0]).strftime(
+        "%m.%Y"
+    )
     grouped_timetracking_df = timetracking_df.groupby(["client", "project"])
-    
+
     prepared_data = []
     for (client_name, project), client_project_df in grouped_timetracking_df:
         project_name = project.split("_", 1)[1].replace("_", " ")
         project_reference = project.split("_")[0]
-        prepared_data.append((client_name, project_name, project_reference, client_project_df))
-    
+        prepared_data.append(
+            (client_name, project_name, project_reference, client_project_df)
+        )
+
     return invoice_month_year, prepared_data
 
 
@@ -30,10 +35,18 @@ def extract_project_details(project):
     return project_name, project_reference
 
 
+def sanitize_filename(project_name):
+    """Removes or replaces characters in names that are invalid for filenames."""
+    return re.sub(r"[<>:\"/\\|?*]", "_", project_name)
+
+
 def construct_pdf_filename(output_directory, project_name):
     """Constructs a sanitized PDF filename based on the project name."""
     current_date = datetime.now().strftime("%Y-%m-%d")
-    return os.path.join(output_directory, f"{current_date}_Stundennachweis_{project_name}_RNR.pdf")
+    project_name = sanitize_filename(project_name)  # Sanitize project name for filename
+    return os.path.join(
+        output_directory, f"{current_date}_Stundennachweis_{project_name}_RNR.pdf"
+    )
 
 
 def format_date(date_string):
@@ -98,9 +111,22 @@ if __name__ == "__main__":
     timetracking_df = pd.read_csv(csv_file)
     invoice_month_year, prepared_data = prepare_project_data(timetracking_df)
 
-    for client_name, project_name, project_reference, client_project_df in prepared_data:
-        output_directory_and_filename = construct_pdf_filename(output_directory, project_name)
-        generate_project_invoice_as_pdf(client_project_df, output_directory_and_filename, invoice_month_year, client_name, project_name, project_reference)
-
+    for (
+        client_name,
+        project_name,
+        project_reference,
+        client_project_df,
+    ) in prepared_data:
+        output_directory_and_filename = construct_pdf_filename(
+            output_directory, project_name
+        )
+        generate_project_invoice_as_pdf(
+            client_project_df,
+            output_directory_and_filename,
+            invoice_month_year,
+            client_name,
+            project_name,
+            project_reference,
+        )
 
     print("PDF invoices successfully generated.")
