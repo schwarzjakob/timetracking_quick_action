@@ -122,7 +122,7 @@ def draw_footer(canvas, width, height):
     # Function to draw multi-line text
     def draw_multiline_text(text, x, y):
         lines = text.split("\n")
-        line_height = 10  # Adjust based on your footer text size
+        line_height = 10  # Adjust based on your footer gtext size
         current_y = y
         for line in lines[::-1]:  # Reverse to draw from bottom to top
             canvas.drawString(x, current_y, line)
@@ -187,11 +187,12 @@ def generate_project_invoice_as_pdf(
     ]
 
     # Create table
-    table = Table(data)
+    column_widths = [68, 100, 300]
+    table = Table(data, colWidths=column_widths)
     table.setStyle(
         TableStyle(
             [
-                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                ("ALIGN", (0, 0), (-1, -1), "LEFT"),
                 ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
                 ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
                 ("GRID", (0, 0), (-1, -1), 1, colors.black),
