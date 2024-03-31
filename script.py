@@ -29,9 +29,9 @@ def generate_pdf(
     pdf_canvas.setFont("Helvetica", 10)
     pdf_canvas.drawString(30, letter[1] - 50, "Auftraggeber: ")
     pdf_canvas.drawString(150, letter[1] - 50, client_name)
-    pdf_canvas.drawString(30, letter[1] - 70, "project:")
+    pdf_canvas.drawString(30, letter[1] - 70, "Projekt:")
     pdf_canvas.drawString(150, letter[1] - 70, project_name)
-    pdf_canvas.drawString(30, letter[1] - 90, "projectreferenz:")
+    pdf_canvas.drawString(30, letter[1] - 90, "Projektreferenz:")
     pdf_canvas.drawString(150, letter[1] - 90, project_reference)
 
     # Table headers
