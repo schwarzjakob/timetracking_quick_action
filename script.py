@@ -10,11 +10,11 @@ def format_date(date_string):
     date_obj = datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
     return date_obj.strftime("%d.%m.%Y")
 
-def generate_pdf(dataframe, output_filename, month_year, client):
+def generate_pdf(dataframe, output_filename, invoice_month_year, client_name):
     c = canvas.Canvas(output_filename, pagesize=letter)
 
     # Title with current month and year
-    title = "Stundennachweis " + month_year
+    title = "Stundennachweis " + invoice_month_year
     c.setFont("Helvetica-Bold", 12)
     c.drawString(30, letter[1] - 30, title)
 
@@ -22,13 +22,13 @@ def generate_pdf(dataframe, output_filename, month_year, client):
     projects = "\n".join(data["project"].unique())
     project_names = [
         project.split("_", 1)[1].replace("_", " ")
-        for project in data["project"].unique()
+        for project in dataframe["project"].unique()
     ]
-    project_references = [project.split("_")[0] for project in data["project"].unique()]
+    project_references = [project.split("_")[0] for project in dataframe["project"].unique()]
 
     c.setFont("Helvetica", 10)
     c.drawString(30, letter[1] - 50, "Auftraggeber: ")
-    c.drawString(150, letter[1] - 50, client)
+    c.drawString(150, letter[1] - 50, client_name)
     c.drawString(30, letter[1] - 70, "project:")
     c.drawString(150, letter[1] - 70, "\n".join(project_names))
     c.drawString(30, letter[1] - 90, "projectreferenz:")
@@ -58,17 +58,15 @@ def generate_pdf(dataframe, output_filename, month_year, client):
 csv_file = sys.argv[1]
 
 try:
-    df = pd.read_csv(csv_file)
+    timetracking_df = pd.read_csv(csv_file)
 
     # Grouping by client and project
-    grouped = df.groupby(["client", "project"])
+    grouped_timetracking_df = timetracking_df.groupby(["client", "project"])
 
     # Extract the month and year from the first row of the CSV file
-    month_year = pd.to_datetime(df["start"].iloc[0]).strftime("%m.%Y")
+    invoice_month_year = pd.to_datetime(timetracking_df["start"].iloc[0]).strftime("%m.%Y")
 
-    for group, data in grouped:
-        client, project = group
-
+    for (client_name, project), client_project_df in grouped_timetracking_df:
         # Extract directory path from the CSV file path and define output directory
         current_directory = os.path.dirname(csv_file)
         output_directory = os.path.join(current_directory, "invoices")
@@ -78,11 +76,11 @@ try:
 
         # Generate the PDF filename based on the client and current date
         current_date = datetime.now().strftime("%Y-%m-%d")
-        pdf_filename = os.path.join(
-            output_directory, f"{current_date}_Stundennachweis_{client}_RNR.pdf"
+        client_project_pdf_filename = os.path.join(
+            output_directory, f"{current_date}_Stundennachweis_{client_name}_RNR.pdf"
         )
 
-        generate_pdf(data, pdf_filename, month_year, client)
+        generate_pdf(client_project_df, client_project_pdf_filename, invoice_month_year, client_name)
 
 except Exception as e:
     print("Error:", e)
