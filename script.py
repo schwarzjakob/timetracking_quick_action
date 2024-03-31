@@ -26,10 +26,7 @@ def process_timetracking_data(timetracking_df, output_directory):
 
             # Generate the PDF filename based on the client and current date
             current_date = datetime.now().strftime("%Y-%m-%d")
-            client_project_pdf_filename = os.path.join(
-                output_directory,
-                f"{current_date}_Stundennachweis_{project_name}_RNR.pdf",
-            )
+            client_project_pdf_filename = construct_pdf_filename(output_directory, project_name)
 
             generate_pdf(
                 client_project_df,
@@ -44,6 +41,10 @@ def process_timetracking_data(timetracking_df, output_directory):
         print("Error:", e)
         sys.exit(1)
 
+def construct_pdf_filename(output_directory, project_name):
+    """Constructs a sanitized PDF filename based on the project name."""
+    current_date = datetime.now().strftime("%Y-%m-%d")
+    return os.path.join(output_directory, f"{current_date}_Stundennachweis_{project_name}_RNR.pdf")
 
 def format_date(date_string):
     date_obj = datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
