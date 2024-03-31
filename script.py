@@ -6,35 +6,21 @@ from datetime import datetime
 import os
 
 
-def process_timetracking_data(timetracking_df, output_directory):
-    try:
-        # Grouping by client and project
-        grouped_timetracking_df = timetracking_df.groupby(["client", "project"])
-
-        # Extract the month and year from the first row of the CSV file
-        invoice_month_year = pd.to_datetime(timetracking_df["start"].iloc[0]).strftime(
-            "%m.%Y"
-        )
-
-        for (client_name, project), client_project_df in grouped_timetracking_df:
-            # Additional project information
-            project_name ,project_reference = extract_project_details(project)
-
-            # Generate the PDF filename based on the client and current date
-            client_project_pdf_filename = construct_pdf_filename(output_directory, project_name)
-
-            generate_project_invoice_as_pdf(
-                client_project_df,
-                client_project_pdf_filename,
-                invoice_month_year,
-                client_name,
-                project_name,
-                project_reference,
-            )
-
-    except Exception as e:
-        print("Error:", e)
-        sys.exit(1)
+def prepare_project_data(timetracking_df):
+    """
+    Prepares data by grouping the DataFrame by client and project,
+    and extracts necessary details for invoice generation.
+    """
+    invoice_month_year = pd.to_datetime(timetracking_df["start"].iloc[0]).strftime("%m.%Y")
+    grouped_timetracking_df = timetracking_df.groupby(["client", "project"])
+    
+    prepared_data = []
+    for (client_name, project), client_project_df in grouped_timetracking_df:
+        project_name = project.split("_", 1)[1].replace("_", " ")
+        project_reference = project.split("_")[0]
+        prepared_data.append((client_name, project_name, project_reference, client_project_df))
+    
+    return invoice_month_year, prepared_data
 
 
 def extract_project_details(project):
@@ -57,13 +43,13 @@ def format_date(date_string):
 
 def generate_project_invoice_as_pdf(
     dataframe,
-    output_filename,
+    output_directory_and_filename,
     invoice_month_year,
     client_name,
     project_name,
     project_reference,
 ):
-    pdf_canvas = canvas.Canvas(output_filename, pagesize=letter)
+    pdf_canvas = canvas.Canvas(output_directory_and_filename, pagesize=letter)
 
     # Title with current month and year
     title = "Stundennachweis " + invoice_month_year
@@ -110,5 +96,11 @@ if __name__ == "__main__":
     os.makedirs(output_directory, exist_ok=True)
 
     timetracking_df = pd.read_csv(csv_file)
-    process_timetracking_data(timetracking_df, output_directory)
+    invoice_month_year, prepared_data = prepare_project_data(timetracking_df)
+
+    for client_name, project_name, project_reference, client_project_df in prepared_data:
+        output_directory_and_filename = construct_pdf_filename(output_directory, project_name)
+        generate_project_invoice_as_pdf(client_project_df, output_directory_and_filename, invoice_month_year, client_name, project_name, project_reference)
+
+
     print("PDF invoices successfully generated.")
