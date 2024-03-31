@@ -18,8 +18,7 @@ def process_timetracking_data(timetracking_df, output_directory):
 
         for (client_name, project), client_project_df in grouped_timetracking_df:
             # Additional project information
-            project_name = project.split("_", 1)[1].replace("_", " ")
-            project_reference = project.split("_")[0]
+            project_name ,project_reference = extract_project_details(project)
 
             # Create the output directory if it does not exist
             os.makedirs(output_directory, exist_ok=True)
@@ -40,6 +39,12 @@ def process_timetracking_data(timetracking_df, output_directory):
     except Exception as e:
         print("Error:", e)
         sys.exit(1)
+
+def extract_project_details(project):
+    """Extracts and returns project name and reference from a combined project string."""
+    project_name = project.split("_", 1)[1].replace("_", " ")
+    project_reference = project.split("_")[0]
+    return project_name, project_reference
 
 def construct_pdf_filename(output_directory, project_name):
     """Constructs a sanitized PDF filename based on the project name."""
