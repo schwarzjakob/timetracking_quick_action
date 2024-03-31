@@ -20,9 +20,6 @@ def process_timetracking_data(timetracking_df, output_directory):
             # Additional project information
             project_name ,project_reference = extract_project_details(project)
 
-            # Create the output directory if it does not exist
-            os.makedirs(output_directory, exist_ok=True)
-
             # Generate the PDF filename based on the client and current date
             current_date = datetime.now().strftime("%Y-%m-%d")
             client_project_pdf_filename = construct_pdf_filename(output_directory, project_name)
@@ -107,6 +104,9 @@ if __name__ == "__main__":
     # Extract directory path from the CSV file path and define output directory
     current_directory = os.path.dirname(csv_file)
     output_directory = os.path.join(current_directory, "invoices")
+
+    # Create the output directory if it does not exist
+    os.makedirs(output_directory, exist_ok=True)
 
     timetracking_df = pd.read_csv(csv_file)
     process_timetracking_data(timetracking_df, output_directory)
