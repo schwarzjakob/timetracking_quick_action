@@ -50,6 +50,7 @@ def construct_pdf_filename(output_directory, project_name):
 
 
 def format_date(date_string):
+    """Formats the date string from the DataFrame to a German date format."""
     date_obj = datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
     return date_obj.strftime("%d.%m.%Y")
 
@@ -62,6 +63,7 @@ def generate_project_invoice_as_pdf(
     project_name,
     project_reference,
 ):
+    """" Generates a PDF invoice for a project based on the provided DataFrame."""
     pdf_canvas = canvas.Canvas(output_directory_and_filename, pagesize=letter)
 
     # Title with current month and year
