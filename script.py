@@ -15,7 +15,7 @@ try:
     grouped = df.groupby(['client', 'project'])
 
     # Extract the month and year from the first row of the CSV file
-    month_year = pd.to_datetime(df['start'].iloc[0]).strftime('%M %Y')
+    month_year = pd.to_datetime(df['start'].iloc[0]).strftime('%m.%Y')
 
     for group, data in grouped:
         client, project = group
