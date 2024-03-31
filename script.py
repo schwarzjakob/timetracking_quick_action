@@ -10,7 +10,8 @@ def format_date(date_string):
     date_obj = datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
     return date_obj.strftime("%d.%m.%Y")
 
-def generate_pdf(dataframe, output_filename, invoice_month_year, client_name):
+
+def generate_pdf(dataframe, output_filename, invoice_month_year, client_name, project):
     c = canvas.Canvas(output_filename, pagesize=letter)
 
     # Title with current month and year
@@ -19,20 +20,16 @@ def generate_pdf(dataframe, output_filename, invoice_month_year, client_name):
     c.drawString(30, letter[1] - 30, title)
 
     # Additional information
-    projects = "\n".join(data["project"].unique())
-    project_names = [
-        project.split("_", 1)[1].replace("_", " ")
-        for project in dataframe["project"].unique()
-    ]
-    project_references = [project.split("_")[0] for project in dataframe["project"].unique()]
+    project_name = [project.split("_", 1)[1].replace("_", " ")]
+    project_reference = [project.split("_")[0]]
 
     c.setFont("Helvetica", 10)
     c.drawString(30, letter[1] - 50, "Auftraggeber: ")
     c.drawString(150, letter[1] - 50, client_name)
     c.drawString(30, letter[1] - 70, "project:")
-    c.drawString(150, letter[1] - 70, "\n".join(project_names))
+    c.drawString(150, letter[1] - 70, "\n".join(project_name))
     c.drawString(30, letter[1] - 90, "projectreferenz:")
-    c.drawString(150, letter[1] - 90, "\n".join(project_references))
+    c.drawString(150, letter[1] - 90, "\n".join(project_reference))
 
     # Table headers
     headers = ["Datum", "Anzahl Stunden", "Aufgabe"]
@@ -64,7 +61,9 @@ try:
     grouped_timetracking_df = timetracking_df.groupby(["client", "project"])
 
     # Extract the month and year from the first row of the CSV file
-    invoice_month_year = pd.to_datetime(timetracking_df["start"].iloc[0]).strftime("%m.%Y")
+    invoice_month_year = pd.to_datetime(timetracking_df["start"].iloc[0]).strftime(
+        "%m.%Y"
+    )
 
     for (client_name, project), client_project_df in grouped_timetracking_df:
         # Extract directory path from the CSV file path and define output directory
@@ -80,7 +79,13 @@ try:
             output_directory, f"{current_date}_Stundennachweis_{client_name}_RNR.pdf"
         )
 
-        generate_pdf(client_project_df, client_project_pdf_filename, invoice_month_year, client_name)
+        generate_pdf(
+            client_project_df,
+            client_project_pdf_filename,
+            invoice_month_year,
+            client_name,
+            project,
+        )
 
 except Exception as e:
     print("Error:", e)
