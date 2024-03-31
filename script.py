@@ -19,7 +19,6 @@ def generate_pdf(dataframe, output_filename, month_year, client):
     c.drawString(30, letter[1] - 30, title)
 
     # Additional information
-    client = "Auftraggeber: " + client
     projects = "\n".join(data["project"].unique())
     project_names = [
         project.split("_", 1)[1].replace("_", " ")
@@ -28,9 +27,10 @@ def generate_pdf(dataframe, output_filename, month_year, client):
     project_references = [project.split("_")[0] for project in data["project"].unique()]
 
     c.setFont("Helvetica", 10)
-    c.drawString(30, letter[1] - 50, client)
+    c.drawString(30, letter[1] - 50, "Auftraggeber: ")
+    c.drawString(150, letter[1] - 50, client)
     c.drawString(30, letter[1] - 70, "project:")
-    c.drawString(100, letter[1] - 70, "\n".join(project_names))
+    c.drawString(150, letter[1] - 70, "\n".join(project_names))
     c.drawString(30, letter[1] - 90, "projectreferenz:")
     c.drawString(150, letter[1] - 90, "\n".join(project_references))
 
