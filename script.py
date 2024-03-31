@@ -11,7 +11,7 @@ def format_date(date_string):
     return date_obj.strftime("%d.%m.%Y")
 
 
-def generate_pdf(dataframe, output_filename, invoice_month_year, client_name, project):
+def generate_pdf(dataframe, output_filename, invoice_month_year, client_name, project, project_name, project_reference):
     c = canvas.Canvas(output_filename, pagesize=letter)
 
     # Title with current month and year
@@ -19,17 +19,13 @@ def generate_pdf(dataframe, output_filename, invoice_month_year, client_name, pr
     c.setFont("Helvetica-Bold", 12)
     c.drawString(30, letter[1] - 30, title)
 
-    # Additional information
-    project_name = [project.split("_", 1)[1].replace("_", " ")]
-    project_reference = [project.split("_")[0]]
-
     c.setFont("Helvetica", 10)
     c.drawString(30, letter[1] - 50, "Auftraggeber: ")
     c.drawString(150, letter[1] - 50, client_name)
     c.drawString(30, letter[1] - 70, "project:")
-    c.drawString(150, letter[1] - 70, "\n".join(project_name))
+    c.drawString(150, letter[1] - 70, project_name)
     c.drawString(30, letter[1] - 90, "projectreferenz:")
-    c.drawString(150, letter[1] - 90, "\n".join(project_reference))
+    c.drawString(150, letter[1] - 90, project_reference)
 
     # Table headers
     headers = ["Datum", "Anzahl Stunden", "Aufgabe"]
@@ -66,6 +62,10 @@ try:
     )
 
     for (client_name, project), client_project_df in grouped_timetracking_df:
+        # Additional project information
+        project_name = project.split("_", 1)[1].replace("_", " ")
+        project_reference = project.split("_")[0]
+
         # Extract directory path from the CSV file path and define output directory
         current_directory = os.path.dirname(csv_file)
         output_directory = os.path.join(current_directory, "invoices")
@@ -76,7 +76,7 @@ try:
         # Generate the PDF filename based on the client and current date
         current_date = datetime.now().strftime("%Y-%m-%d")
         client_project_pdf_filename = os.path.join(
-            output_directory, f"{current_date}_Stundennachweis_{client_name}_RNR.pdf"
+            output_directory, f"{current_date}_Stundennachweis_{project_name}_RNR.pdf"
         )
 
         generate_pdf(
@@ -85,6 +85,8 @@ try:
             invoice_month_year,
             client_name,
             project,
+            project_name,
+            project_reference
         )
 
 except Exception as e:
