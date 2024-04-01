@@ -49,7 +49,7 @@ Your command line will indicate that you are now within the virtual environment 
 With the virtual environment activated, install the required libraries (`pandas` and `reportlab`) using `pip`:
 
 ```sh
-pip install pandas reportlab
+pip install pandas reportlab PyPDF2
 ```
 
 These commands install the `pandas` library for data manipulation and analysis, and `reportlab` for generating PDF files, within your virtual environment.

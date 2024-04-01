@@ -6,7 +6,8 @@ import re
 
 # Import necessary modules from reportlab
 from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
+from reportlab.pdfgen.canvas import Canvas
+from PyPDF2 import PdfReader, PdfWriter
 from reportlab.platypus import SimpleDocTemplate, Spacer, Paragraph, Table, TableStyle
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
@@ -47,15 +48,7 @@ custom_styles = {
         alignment=TA_LEFT,
         textColor=black,
         fontName="Helvetica",  # Normal text, not bold for table body
-    ),
-    "footer": ParagraphStyle(
-        name="Footer",
-        fontSize=8,
-        leading=12,
-        alignment=TA_LEFT,
-        textColor=black,
-        fontName="Helvetica",  # Normal text, not bold for footer
-    ),
+    )
 }
 
 
@@ -107,49 +100,35 @@ def format_date(date_string):
     return date_obj.strftime("%d.%m.%Y")
 
 
-def draw_footer(canvas, width, height):
-    # Define the bottom margin where the footer will start
-    bottom_margin = height - 720  # Margin from the bottom of the page
-
-    # Define the left and right margins
-    right_margin = 540  # 191 mm converted to points
-    left_margin = width - 540  # Subtract from the total width to get the right margin
-
-    # Set the footer text size and font
-    footer_text_size = 8
-    canvas.setFont("Helvetica", footer_text_size)
-
-    # Function to draw multi-line text
-    def draw_multiline_text(text, x, y):
-        lines = text.split("\n")
-        line_height = 10  # Adjust based on your footer gtext size
-        current_y = y
-        for line in lines[::-1]:  # Reverse to draw from bottom to top
-            canvas.drawString(x, current_y, line)
-            current_y += line_height
+def add_pdf_background(pdf_path, background_pdf_path):
+    """
+    Adds a PDF background to the input PDF file.
     
-    # Define footer content and positions
-    footer_content = [
-        ("Jonathan Werle Media\nMatthiashofstraße 37\n52064 Aachen", left_margin),
-        ("Phone: +49 157 50756248\nE-Mail: jonathan@jwm.media\nWebsite: jwm.media", (left_margin + 130)),
-        ("USt-IdNr.: DE361350292\nIBAN: DE96 1101 0101 5518 9320 08\nBIC: SOBKDEB2XXX", (left_margin + 260)),
-        ("Page 1 of 1", right_margin),  # This will be right-aligned later
-    ]
+    Args:
+    - input_pdf_path: Path to the generated PDF invoice.
+    - background_pdf_path: Path to the PDF file to use as background.
+    - output_pdf_path: Path to save the final PDF file with background.
+    """
+    # Load the background PDF
+    background_reader = PdfReader(background_pdf_path)
+    background_page = background_reader.pages[0]
 
-    # Calculate the starting y position for the footer, assuming the text might occupy multiple lines
-    start_y_position = bottom_margin
+    # Load the generated invoice PDF
+    input_reader = PdfReader(pdf_path)
+    input_page = input_reader.pages[0]
 
-    # Draw the footer elements
-    for text, x_position in footer_content[:-1]:  # Skip the last for special handling
-        draw_multiline_text(text, x_position, start_y_position)
+    # Create a writer for the output PDF
+    writer = PdfWriter()
 
-    # Special handling for the last element (Page number) to right-align
-    page_info, page_info_x = footer_content[-1]
-    page_info_width = canvas.stringWidth(page_info, "Helvetica", footer_text_size)
-    canvas.drawRightString(page_info_x, start_y_position, page_info)
+    # Merge the invoice content onto the background page
+    background_page.merge_page(input_page)
 
-    # Optionally, draw a line above the footer content
-    canvas.line(left_margin, start_y_position + 40, right_margin, start_y_position + 40)  # Adjust `60` based on the actual footer content height
+    # Add the merged page to the writer
+    writer.add_page(background_page)
+
+    # Write the output PDF file
+    with open(pdf_path, "wb") as f_out:
+        writer.write(f_out)
 
 
 def generate_project_invoice_as_pdf(
@@ -211,15 +190,13 @@ def generate_project_invoice_as_pdf(
     )
 
     story.append(table)
-
-    # Add footer
-    width, height = letter
-    doc.build(story, onFirstPage=lambda canvas, doc: draw_footer(canvas, width, height), onLaterPages=lambda canvas, doc: draw_footer(canvas, width, height))
+    doc.build(story)
 
 
 if __name__ == "__main__":
     # Assuming the first argument is the CSV file path
     csv_file = sys.argv[1]
+    pdf_background = sys.argv[2]
 
     # Extract directory path from the CSV file path and define output directory
     current_directory = os.path.dirname(csv_file)
@@ -248,5 +225,6 @@ if __name__ == "__main__":
             project_name,
             project_reference,
         )
+        add_pdf_background(output_directory_and_filename, pdf_background)
 
     print("PDF invoices successfully generated.")
