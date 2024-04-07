@@ -3,6 +3,7 @@ import pandas as pd
 from datetime import datetime
 import os
 import re
+import traceback
 
 # Import necessary modules from reportlab
 from reportlab.lib.pagesizes import A4
@@ -17,14 +18,29 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 
 # Register the font (only needs to be done once)
-font_path_bold = sys.argv[2] + "/font-bold.ttf"
-font_name_bold = "font-bold"
+try:
+    font_path_bold = sys.argv[2] + "/font-bold.ttf"
+    font_name_bold = "font-bold"
+except Exception as e:
+    tb = traceback.extract_tb(sys.exc_info()[2])
+    print(f"Exception: {e}, Line: {tb[-1].lineno}")
+    sys.exit(1)
 
-font_path_medium = sys.argv[2] + "/font-medium.ttf"
-font_name_medium = "font-medium"
+try:
+    font_path_medium = sys.argv[2] + "/font-medium.ttf"
+    font_name_medium = "font-medium"
+except Exception as e:
+    tb = traceback.extract_tb(sys.exc_info()[2])
+    print(f"Exception: {e}, Line: {tb[-1].lineno}")
+    sys.exit(1)
 
-pdfmetrics.registerFont(TTFont(font_name_bold, font_path_bold))
-pdfmetrics.registerFont(TTFont(font_name_medium, font_path_medium))
+try:
+    pdfmetrics.registerFont(TTFont(font_name_bold, font_path_bold))
+    pdfmetrics.registerFont(TTFont(font_name_medium, font_path_medium))
+except Exception as e:
+    tb = traceback.extract_tb(sys.exc_info()[2])
+    print(f"Exception: {e}, Line: {tb[-1].lineno}")
+    sys.exit(1)
 
 # Define custom styles
 custom_styles = {
@@ -156,7 +172,6 @@ def generate_project_invoice_as_pdf(
     page_width, page_height = A4
     top_bottom_margin = 72  # 2.54 cm in points
     left_right_margin = 54  # 1.91 cm in points
-    print(page_width, page_height, top_bottom_margin, left_right_margin)
 
     # Create a document with margins
     doc = SimpleDocTemplate(
@@ -215,7 +230,6 @@ def generate_project_invoice_as_pdf(
     col1_width = 100
     col2_width = 100
     col3_width = content_width - col1_width - col2_width
-    print(content_width, col1_width, col2_width, col3_width)
 
     # Create the table
     column_widths = [col1_width, col2_width, col3_width]
@@ -252,37 +266,41 @@ def generate_project_invoice_as_pdf(
 
 
 if __name__ == "__main__":
-    # Assuming the first argument is the CSV file path
-    csv_file = sys.argv[1]
-    pdf_background = sys.argv[2] + "/background.pdf"
+    try:
+        # Assuming the first argument is the CSV file path
+        csv_file = sys.argv[1]
+        pdf_background = sys.argv[2] + "/background.pdf"
 
-    # Extract directory path from the CSV file path and define output directory
-    current_directory = os.path.dirname(csv_file)
-    output_directory = os.path.join(current_directory, "invoices")
+        # Extract directory path from the CSV file path and define output directory
+        current_directory = os.path.dirname(csv_file)
+        output_directory = os.path.join(current_directory, "invoices")
 
-    # Create the output directory if it does not exist
-    os.makedirs(output_directory, exist_ok=True)
+        # Create the output directory if it does not exist
+        os.makedirs(output_directory, exist_ok=True)
 
-    timetracking_df = pd.read_csv(csv_file)
-    invoice_month_year, prepared_data = prepare_project_data(timetracking_df)
+        timetracking_df = pd.read_csv(csv_file)
+        invoice_month_year, prepared_data = prepare_project_data(timetracking_df)
 
-    for (
-        client_name,
-        project_name,
-        project_reference,
-        client_project_df,
-    ) in prepared_data:
-        output_directory_and_filename = construct_pdf_filename(
-            output_directory, project_name
-        )
-        generate_project_invoice_as_pdf(
-            client_project_df,
-            output_directory_and_filename,
-            invoice_month_year,
+        for (
             client_name,
             project_name,
             project_reference,
-        )
-        add_pdf_background(output_directory_and_filename, pdf_background)
+            client_project_df,
+        ) in prepared_data:
+            output_directory_and_filename = construct_pdf_filename(
+                output_directory, project_name
+            )
+            generate_project_invoice_as_pdf(
+                client_project_df,
+                output_directory_and_filename,
+                invoice_month_year,
+                client_name,
+                project_name,
+                project_reference,
+            )
+            add_pdf_background(output_directory_and_filename, pdf_background)
 
-    print("PDF invoices successfully generated.")
+            print(f"{output_directory_and_filename} successfully generated.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        sys.exit(1)
