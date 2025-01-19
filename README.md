@@ -1,6 +1,6 @@
-# Jonathan's Automated Invoice Generation Script
+# Automated Invoice Generation Script
 
-This script is specifically designed for Jonathan Werle's strategic communication consulting work, enabling the efficient generation of PDF invoices from time-tracking data. While personalized for Jonathan, the script offers a template for automating similar tasks.
+This script enables the efficient generation of PDF invoices from time-tracking data.
 
 ## Features
 
